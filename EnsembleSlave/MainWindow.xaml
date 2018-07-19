@@ -5,8 +5,39 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:EnsembleSlave"
         mc:Ignorable="d"
-        Title="MainWindow" Height="450" Width="800">
-    <Grid>
-        
-    </Grid>
+        Title="MainWindow" Height="550" Width="1000" Loaded="Window_Loaded">
+    <StackPanel Orientation="Horizontal">
+        <StackPanel>
+            <Grid Margin="10">
+                <Image Name="ColorImage" Height="480" Width="640" Source="./Resources/GreyBack.png"/>
+                <Canvas x:Name="PartsCanvas"/>
+            </Grid>
+        </StackPanel>
+        <StackPanel Width="300">
+            <DockPanel Margin="10">
+                <Button DockPanel.Dock="Left" x:Name="BluetoothButton" Content="BluetoothManager" Margin="5,20,5,20" Click="BluetoothButton_Click"/>
+                <TextBlock DockPanel.Dock="Top" Text="通信状態" FontWeight="Bold" Margin="5,5,0,0"/>
+                <TextBlock DockPanel.Dock="Top" Text="未接続" Margin="15,0,0,0"/>
+                <TextBlock DockPanel.Dock="Top" Text="接続先デバイス" FontWeight="Bold" Margin="5,5,0,0"/>
+                <TextBlock DockPanel.Dock="Top" Text="なし" Margin="15,0,0,0"/>
+            </DockPanel>
+            <StackPanel Margin="10">
+                <Button x:Name="PlayButton" Content="Play" Click="PlayButton_Click" Margin="5"/>
+                <Button x:Name="StopButton" Content="Stop" Click="StopButton_Click"  Margin="5"/>
+                <CheckBox x:Name="RepeatCheck" Content="Repeat" Margin="5" />
+                <TextBlock x:Name="Chord" Text="Chord Progress:" Margin="5"/>
+                <TextBlock x:Name="Index" Text="-1:" Margin="5"/>
+                <StackPanel Orientation="Horizontal">
+                    <StackPanel Orientation="Horizontal" Margin="5">
+                        <Image Width="50" Source="./Resources/GreyBack.png" Margin="5"/>
+                        <TextBlock Text="instrument" VerticalAlignment="Center" Margin="5"/>
+                    </StackPanel>
+                    <StackPanel Orientation="Horizontal" Margin="5">
+                        <Image Width="50" Source="./Resources/GreyBack.png" Margin="5"/>
+                        <TextBlock Text="instrument" VerticalAlignment="Center" Margin="5"/>
+                    </StackPanel>
+                </StackPanel>
+                </StackPanel>
+        </StackPanel>
+    </StackPanel>
 </Window>
