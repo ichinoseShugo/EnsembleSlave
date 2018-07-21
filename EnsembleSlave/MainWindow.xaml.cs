@@ -15,6 +15,8 @@ using System.Windows.Navigation;
 using System.Windows.Shapes;
 using System.Windows.Threading;
 using EnsembleSlave.Bluetooth;
+using System.Runtime.InteropServices;
+
 namespace EnsembleSlave
 {
     /// <summary>
@@ -22,28 +24,30 @@ namespace EnsembleSlave
     /// </summary>
     public partial class MainWindow : Window
     {
-        DispatcherTimer dispatcherTimer;
+        DispatcherTimer playTimer;
+        DispatcherTimer ensembleTimer;
         List<int> timeList = new List<int>();
         List<byte[]> freqsList = new List<byte[]>();
         byte[] currentFreqs;
         int listIndex = 0;
-
         MidiManager midi = new MidiManager();
 
         public bool IsConnectRealSense = false;
-
         PXCMSenseManager senseManager;
         PXCMProjection projection;
         PXCMCapture.Device device;
-
         PXCMHandModule handAnalyzer;
         PXCMHandData handData;
 
         private BluetoothWindow bluetoothWindow;
+        public DateTime Target;
+        public DateTime dt = new DateTime(1900, 1, 1);
+        public System.Diagnostics.Stopwatch sw = new System.Diagnostics.Stopwatch();
 
         public MainWindow()
         {
             InitializeComponent();
+
             Top = Constants.TopMargin;
             Left = 0;
         }
@@ -51,19 +55,98 @@ namespace EnsembleSlave
         private void Window_Loaded(object sender, RoutedEventArgs e)
         {
             LoadChordProgress("cp1.csv");
-            InitTimer();
+            InitEnsembleTimer();
             InitializeRealSense();
             OpenBluetoothWindow();
-
+            
             CompositionTarget.Rendering += CompositionTarget_Rendering;
+            //SetTarget("d");
+        }
+
+        private void Window_Closing(object sender, CancelEventArgs e)
+        {
+            if (bluetoothWindow != null)
+                bluetoothWindow.Close();
+            Uninitialize();
         }
 
         private void CompositionTarget_Rendering(object sender, EventArgs e)
         {
-            if(Constants.RealSenseIsConnect)UpdateRealSense();
+            if (Constants.RealSenseIsConnect) UpdateRealSense();
         }
 
-        #region Midi
+        private void PlayButton_Click(object sender, RoutedEventArgs e)
+        {
+            //StartEnsemble();
+        }
+
+        private void StopButton_Click(object sender, RoutedEventArgs e)
+        {
+            StopEnsemble();
+        }
+
+        private void BluetoothButton_Click(object sender, RoutedEventArgs e)
+        {
+            OpenBluetoothWindow();
+        }
+
+        private void PlayTimer_Tick(object sender, EventArgs e)
+        {
+            DateTime now = dt.Add(sw.Elapsed);
+            if (now > Target)
+            {
+                StartEnsemble();
+                Console.WriteLine("starg");
+                playTimer.Stop();
+            }
+        }
+
+        private void EnsembleTimer_Tick(object sender, EventArgs e)
+        {
+            if (listIndex >= timeList.Count)
+            {
+                listIndex = 0;
+                if (RepeatCheck.IsChecked == false)
+                {
+                    ensembleTimer.Stop();
+                    PlayButton.IsEnabled = true;
+                    Chord.Text = "Chord Progress:";
+                    return;
+                }
+            }
+            UpdateChord();
+        }
+
+        /// <summary> 終了処理 </summary>
+        private void Uninitialize()
+        {
+            if (senseManager != null)
+            {
+                senseManager.Dispose();
+                senseManager = null;
+            }
+            if (projection != null)
+            {
+                projection.Dispose();
+                projection = null;
+            }
+            if (handData != null)
+            {
+                handData.Dispose();
+                handData = null;
+            }
+
+            if (handAnalyzer != null)
+            {
+                handAnalyzer.Dispose();
+                handAnalyzer = null;
+            }
+            //handConfig.UnsubscribeGesture(OnFiredGesture);
+            //handConfig.Dispose();
+        }
+
+        #region Midi関連メソッド
+
         private void LoadChordProgress(string filename)
         {
             try
@@ -95,39 +178,54 @@ namespace EnsembleSlave
             }
         }
 
-        private void InitTimer()
+        public void SetTarget()
         {
-            //初期化、普通にする際はプロパティはNormalでよいかと
-            dispatcherTimer = new DispatcherTimer(DispatcherPriority.Normal);
-            //左から　日数、時間、分、秒、ミリ秒で設定　今回は10ミリ秒ごとつまり1秒あたり100回処理します
-            dispatcherTimer.Interval = new TimeSpan(0, 0, 0, 2, 0);
-            //dispatcherTimer.Tick += new EventHandler(DispatcherTimer_Tick);
-            dispatcherTimer.Tick += new EventHandler(DispatcherTimer_Tick);
+            Target = dt.Add(sw.Elapsed).AddSeconds(5);
+            InitPlayTimer();
         }
 
-        private void PlayButton_Click(object sender, RoutedEventArgs e)
+        private void SetTarget(string str)
+        {
+            Target = DateTime.ParseExact(str, "HH:mm:ss:fff",null);
+            InitPlayTimer();
+        }
+
+        private void InitPlayTimer()
+        {
+            //初期化、普通にする際はプロパティはNormalでよいかと
+            playTimer = new DispatcherTimer(DispatcherPriority.Normal);
+            //左から　日数、時間、分、秒、ミリ秒で設定　今回は10ミリ秒ごとつまり1秒あたり100回処理します
+            playTimer.Interval = new TimeSpan(0, 0, 0, 0, 10);
+            //dispatcherTimer.Tick += new EventHandler(DispatcherTimer_Tick);
+            playTimer.Tick += new EventHandler(PlayTimer_Tick);
+            playTimer.Start();
+        }
+
+        private void InitEnsembleTimer()
+        {
+            //初期化、普通にする際はプロパティはNormalでよいかと
+            ensembleTimer = new DispatcherTimer(DispatcherPriority.Normal);
+            //左から　日数、時間、分、秒、ミリ秒で設定　今回は10ミリ秒ごとつまり1秒あたり100回処理します
+            ensembleTimer.Interval = new TimeSpan(0, 0, 0, 2, 0);
+            //dispatcherTimer.Tick += new EventHandler(DispatcherTimer_Tick);
+            ensembleTimer.Tick += new EventHandler(EnsembleTimer_Tick);
+        }
+
+        public void StartEnsemble()
         {
             UpdateChord();
-            dispatcherTimer.Start();
+            ensembleTimer.Start();
             PlayButton.IsEnabled = false;
         }
 
-        private void DispatcherTimer_Tick(object sender, EventArgs e)
+        public void StopEnsemble()
         {
-            if (listIndex >= timeList.Count)
-            {
-                listIndex = 0;
-                if (RepeatCheck.IsChecked == false)
-                {
-                    dispatcherTimer.Stop();
-                    PlayButton.IsEnabled = true;
-                    Chord.Text = "Chord Progress:";
-                    return;
-                }
-            }
-            UpdateChord();
+            listIndex = 0;
+            ensembleTimer.Stop();
+            PlayButton.IsEnabled = true;
+            Chord.Text = "Chord Progress:";
         }
-        
+
         private void UpdateChord()
         {
             string freqs = "Chord Progress: ";
@@ -140,13 +238,6 @@ namespace EnsembleSlave
             listIndex++;
         }
 
-        private void StopButton_Click(object sender, RoutedEventArgs e)
-        {
-            listIndex = 0;
-            dispatcherTimer.Stop();
-            PlayButton.IsEnabled = true;
-            Chord.Text = "Chord Progress:";
-        }
         #endregion
 
         #region RealSense
@@ -272,7 +363,7 @@ namespace EnsembleSlave
             UpdateHandFrame();
 
             //演奏領域の表示
-            if (dispatcherTimer.IsEnabled)
+            if (ensembleTimer.IsEnabled)
                 for (int k = 0; k < currentFreqs.Length; k++)
                 {
                     SolidColorBrush myBrush = new SolidColorBrush(Constants.colors[k]);
@@ -341,7 +432,7 @@ namespace EnsembleSlave
                     continue;
                 }
                 GetFingerData(hand, PXCMHandData.JointType.JOINT_MIDDLE_TIP);
-                if(dispatcherTimer.IsEnabled)DetectTap(hand);
+                if(ensembleTimer.IsEnabled)DetectTap(hand);
             }
         }
 
@@ -519,17 +610,83 @@ namespace EnsembleSlave
 
         #region Bluetooth
 
-        private void BluetoothButton_Click(object sender, RoutedEventArgs e)
-        {
-            OpenBluetoothWindow();
-        }
-
         private void OpenBluetoothWindow()
         {
             if (Constants.BluetoothWindowIsOpen) return;
             bluetoothWindow = new BluetoothWindow(this);
             bluetoothWindow.Show();
         }
+
+        private void UpdateNTPTime()
+        {
+            // UDP生成
+            System.Net.Sockets.UdpClient objSck;
+            System.Net.IPEndPoint ipAny = new System.Net.IPEndPoint(System.Net.IPAddress.Any, 0);
+            objSck = new System.Net.Sockets.UdpClient(ipAny);
+
+            // UDP送信
+            Byte[] sdat = new Byte[48];
+            sdat[0] = 0xB;
+            objSck.Send(sdat, sdat.GetLength(0), "ntp.nict.jp", 123);
+
+            // UDP受信
+            Byte[] rdat = objSck.Receive(ref ipAny);
+
+            // 1900年1月1日からの経過時間(日時分秒)
+            long lngAllS; // 1900年1月1日からの経過秒数
+            long lngD;    // 日
+            long lngH;    // 時
+            long lngM;    // 分
+            long lngS;    // 秒
+
+            // 1900年1月1日からの経過秒数
+            lngAllS = (long)(rdat[40] * (double)16777216 //2^24 Math.Pow(2, (8 * 3))
+                    + rdat[41] * (double)65536    //2^16    
+                    + rdat[42] * (double)256      //2^8 
+                    + rdat[43]);
+
+            /*
+            lngAllS = (long)(rdat[40] * Math.Pow(2, (8 * 3)) //2^24
+                    + rdat[41] * Math.Pow(2, (8 * 2))    //2^16    
+                    + rdat[42] * Math.Pow(2, (8 * 1))      //2^8 
+                    + rdat[43]);
+                    */
+
+            lngD = lngAllS / (24 * 60 * 60); // 日
+            lngS = lngAllS % (24 * 60 * 60); // 残りの秒数
+            lngH = lngS / (60 * 60);         // 時
+            lngS = lngS % (60 * 60);         // 残りの秒数
+            lngM = lngS / 60;                // 分
+            lngS = lngS % 60;                // 秒
+
+            long pico = (long)(rdat[44] * (double)16777216   //2^24
+                        + rdat[45] * (double)65536    //2^16    
+                        + rdat[46] * (double)256      //2^8 
+                        + rdat[47]);
+
+            long mill = (long)((pico * 1000) / (double)4294967296); //2~32
+
+            // DateTime型への変換
+            dt = dt.AddDays(lngD);
+            dt = dt.AddHours(lngH);
+            dt = dt.AddMinutes(lngM);
+            dt = dt.AddSeconds(lngS);
+            dt = dt.AddMilliseconds(mill);
+            //グリニッジ標準時から日本時間への変更
+            dt = dt.AddHours(9);
+            sw.Start();
+        }
         #endregion
+
+        private void d_Click(object sender, RoutedEventArgs e)
+        {
+            PlayFromBluetooth();
+        }
+
+        public void PlayFromBluetooth()
+        {
+            UpdateNTPTime();
+            SetTarget();
+        }
     }
 }

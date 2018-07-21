@@ -7,7 +7,7 @@
         mc:Ignorable="d"
         Title="BluetoothWindow" Height="480" Width="200" Loaded="WindowLoaded">
     <StackPanel>
-        <Button x:Name="EnumerateButton" Click="EnumerateButton_Click" Content="Enumerate" Margin="0,20,0,0"/>
+        <Button x:Name="EnumerateButton" Click="EnumerateButton_Click" Content="Enumerate" />
         <Button x:Name="ConnectButton" IsEnabled="False" Click="ConnectButton_Click" Content="Connect"/>
         <Button x:Name="ReadButton" IsEnabled="False" Click="ReadButton_Click" Content="Read"/>
         <Button x:Name="SendButton" IsEnabled="False" Click="SendButton_Click" Content="Send"/>

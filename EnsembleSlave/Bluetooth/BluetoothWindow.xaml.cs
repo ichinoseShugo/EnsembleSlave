@@ -67,6 +67,12 @@ namespace EnsembleSlave.Bluetooth
 
         }
 
+        private void EnumerateButton_Click(object sender, RoutedEventArgs e)
+        {
+            mainWindow.PlayButton.IsEnabled = false;
+            StartDeviceWatcher();
+        }
+
         private void SendButton_Click(object sender, RoutedEventArgs e)
         {
             bluetoothManager.Send();
@@ -74,12 +80,9 @@ namespace EnsembleSlave.Bluetooth
 
         private void ReadButton_Click(object sender, RoutedEventArgs e)
         {
-            //Console.WriteLine(1);
-            bluetoothManager.Receive();
-            Console.WriteLine(1);
-            bluetoothManager.Send();
-            Console.WriteLine(2);
-            bluetoothManager.Start();
+            //bluetoothManager.Receive();
+            //bluetoothManager.Send();
+            bluetoothManager.Start(mainWindow);
         }
 
         private void DisconnectButton_Click(object sender, RoutedEventArgs e)
@@ -130,8 +133,9 @@ namespace EnsembleSlave.Bluetooth
         #endregion
 
         //接続可能なデバイス一覧の取得と表示UI操作に関する部分
-        #region DeviceWatcher  
-        private void EnumerateButton_Click(object sender, RoutedEventArgs e)
+        #region DeviceWatcher関連メソッド
+
+        private void StartDeviceWatcher()
         {
             if (deviceWatcher == null)
             {

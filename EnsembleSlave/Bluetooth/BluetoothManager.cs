@@ -17,11 +17,9 @@ namespace EnsembleSlave.Bluetooth
         private RfcommDeviceService ConnectService = null;
         private StreamSocket ConnectSocket = null;
         private BluetoothDevice bluetoothDevice;
-
-        #region Connect   
+        
         public async void Connect(RfcommDeviceDisplay deviceInfoDisp)
         {
-
             try
             {
                 bluetoothDevice = await BluetoothDevice.FromIdAsync(deviceInfoDisp.Id);
@@ -36,7 +34,7 @@ namespace EnsembleSlave.Bluetooth
             // should not be interacted with.
 
             // This should return a list of uncached Bluetooth services (so if the server was not active when paired, it will still be detected by this call
-            string uuid = "17fcf242-f86d-4e35-805e" + Constants.BLUETOOTH_ID;
+            string uuid = "17fcf242-f86d-4e35-805e-" + Constants.BLUETOOTH_ID;
             Guid RfcommChatServiceUuid = Guid.Parse(uuid);
             var rfcommServices = await bluetoothDevice.GetRfcommServicesForIdAsync(
                 RfcommServiceId.FromUuid(RfcommChatServiceUuid), BluetoothCacheMode.Uncached);
@@ -83,7 +81,6 @@ namespace EnsembleSlave.Bluetooth
                 MessageBox.Show("socket接続がおかしい");
             }
         }
-        #endregion
 
         //接続切断命令
         public void Disconnect()
@@ -157,8 +154,7 @@ namespace EnsembleSlave.Bluetooth
             }
         }
 
-        string now;
-        public async void Start()
+        public async void Start(MainWindow main)
         {
             try
             {
@@ -169,8 +165,8 @@ namespace EnsembleSlave.Bluetooth
                     await ConnectSocket.InputStream.ReadAsync(buffer.AsBuffer(), 120, InputStreamOptions.Partial);
                     //受信したbyteデータを文字列に変換
                     string str = Encoding.GetEncoding("ASCII").GetString(buffer);
-                    now = DateTime.Now.ToString();
-                    //Console.WriteLine(now);
+
+                    main.PlayFromBluetooth();
                 }
             }
             catch

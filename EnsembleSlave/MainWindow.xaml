@@ -5,7 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:EnsembleSlave"
         mc:Ignorable="d"
-        Title="MainWindow" Height="550" Width="1000" Loaded="Window_Loaded">
+        Title="MainWindow" Height="550" Width="1000" Loaded="Window_Loaded" Closing="Window_Closing">
     <StackPanel Orientation="Horizontal">
         <StackPanel>
             <Grid Margin="10">
@@ -17,10 +17,11 @@
             <DockPanel Margin="10">
                 <Button DockPanel.Dock="Left" x:Name="BluetoothButton" Content="BluetoothManager" Margin="5,20,5,20" Click="BluetoothButton_Click"/>
                 <TextBlock DockPanel.Dock="Top" Text="通信状態" FontWeight="Bold" Margin="5,5,0,0"/>
-                <TextBlock DockPanel.Dock="Top" Text="未接続" Margin="15,0,0,0"/>
+                <TextBlock DockPanel.Dock="Top" Text="未接続" Margin="15,0,0,0" />
                 <TextBlock DockPanel.Dock="Top" Text="接続先デバイス" FontWeight="Bold" Margin="5,5,0,0"/>
                 <TextBlock DockPanel.Dock="Top" Text="なし" Margin="15,0,0,0"/>
             </DockPanel>
+            <Button x:Name="d" Content="dd" Click="d_Click" />
             <StackPanel Margin="10">
                 <Button x:Name="PlayButton" Content="Play" Click="PlayButton_Click" Margin="5"/>
                 <Button x:Name="StopButton" Content="Stop" Click="StopButton_Click"  Margin="5"/>
