@@ -160,17 +160,20 @@ namespace EnsembleSlave.Bluetooth
             {
                 if (ConnectSocket != null)
                 {
+                    main.UpdateNTPTime();
                     byte[] buffer = new byte[120];
                     //InputStreamのデータを変数bufferに格納
                     await ConnectSocket.InputStream.ReadAsync(buffer.AsBuffer(), 120, InputStreamOptions.Partial);
                     //受信したbyteデータを文字列に変換
                     string str = Encoding.GetEncoding("ASCII").GetString(buffer);
-
-                    main.PlayFromBluetooth();
+                    //string str = Encoding.GetEncoding("UTF8").GetString(buffer);
+                    Console.WriteLine(str.Substring(0, 12));
+                    main.SetTarget(str.Substring(0, 12));
                 }
             }
-            catch
+            catch(Exception e)
             {
+                Console.WriteLine(e.Message);
                 lock (this)
                 {
                     if (ConnectSocket == null)

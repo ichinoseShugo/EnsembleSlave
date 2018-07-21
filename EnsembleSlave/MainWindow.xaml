@@ -21,7 +21,6 @@
                 <TextBlock DockPanel.Dock="Top" Text="接続先デバイス" FontWeight="Bold" Margin="5,5,0,0"/>
                 <TextBlock DockPanel.Dock="Top" Text="なし" Margin="15,0,0,0"/>
             </DockPanel>
-            <Button x:Name="d" Content="dd" Click="d_Click" />
             <StackPanel Margin="10">
                 <Button x:Name="PlayButton" Content="Play" Click="PlayButton_Click" Margin="5"/>
                 <Button x:Name="StopButton" Content="Stop" Click="StopButton_Click"  Margin="5"/>

@@ -9,7 +9,7 @@
     <StackPanel>
         <Button x:Name="EnumerateButton" Click="EnumerateButton_Click" Content="Enumerate" />
         <Button x:Name="ConnectButton" IsEnabled="False" Click="ConnectButton_Click" Content="Connect"/>
-        <Button x:Name="ReadButton" IsEnabled="False" Click="ReadButton_Click" Content="Read"/>
+        <Button x:Name="WaitButton" IsEnabled="False" Click="WaitButton_Click" Content="親機からの演奏開始信号を待つ"/>
         <Button x:Name="SendButton" IsEnabled="False" Click="SendButton_Click" Content="Send"/>
         <Button x:Name="DisconnectButton" IsEnabled="False" Click="DisconnectButton_Click" Content="Disconnect"/>
         <ListView x:Name="resultsListView" ItemsSource="{Binding}" SelectionChanged="ResultsListView_SelectionChanged" 

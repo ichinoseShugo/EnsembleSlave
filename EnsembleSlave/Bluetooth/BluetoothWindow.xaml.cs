@@ -69,19 +69,17 @@ namespace EnsembleSlave.Bluetooth
 
         private void EnumerateButton_Click(object sender, RoutedEventArgs e)
         {
-            mainWindow.PlayButton.IsEnabled = false;
+            //mainWindow.PlayButton.IsEnabled = false;
             StartDeviceWatcher();
         }
 
         private void SendButton_Click(object sender, RoutedEventArgs e)
         {
-            bluetoothManager.Send();
+            //bluetoothManager.Send();
         }
 
-        private void ReadButton_Click(object sender, RoutedEventArgs e)
+        private void WaitButton_Click(object sender, RoutedEventArgs e)
         {
-            //bluetoothManager.Receive();
-            //bluetoothManager.Send();
             bluetoothManager.Start(mainWindow);
         }
 
@@ -106,7 +104,7 @@ namespace EnsembleSlave.Bluetooth
 
             StopWatcher();
 
-            ReadButton.IsEnabled = true;
+            WaitButton.IsEnabled = true;
             SendButton.IsEnabled = true;
             DisconnectButton.IsEnabled = true;
         }

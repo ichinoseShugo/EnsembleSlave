@@ -60,7 +60,6 @@ namespace EnsembleSlave
             OpenBluetoothWindow();
             
             CompositionTarget.Rendering += CompositionTarget_Rendering;
-            //SetTarget("d");
         }
 
         private void Window_Closing(object sender, CancelEventArgs e)
@@ -96,7 +95,7 @@ namespace EnsembleSlave
             if (now > Target)
             {
                 StartEnsemble();
-                Console.WriteLine("starg");
+                Console.WriteLine("start");
                 playTimer.Stop();
             }
         }
@@ -177,14 +176,8 @@ namespace EnsembleSlave
                 Console.WriteLine("failed to open the file : " + e.Message);
             }
         }
-
-        public void SetTarget()
-        {
-            Target = dt.Add(sw.Elapsed).AddSeconds(5);
-            InitPlayTimer();
-        }
-
-        private void SetTarget(string str)
+        
+        public void SetTarget(string str)
         {
             Target = DateTime.ParseExact(str, "HH:mm:ss:fff",null);
             InitPlayTimer();
@@ -617,7 +610,7 @@ namespace EnsembleSlave
             bluetoothWindow.Show();
         }
 
-        private void UpdateNTPTime()
+        public void UpdateNTPTime()
         {
             // UDP生成
             System.Net.Sockets.UdpClient objSck;
@@ -677,16 +670,5 @@ namespace EnsembleSlave
             sw.Start();
         }
         #endregion
-
-        private void d_Click(object sender, RoutedEventArgs e)
-        {
-            PlayFromBluetooth();
-        }
-
-        public void PlayFromBluetooth()
-        {
-            UpdateNTPTime();
-            SetTarget();
-        }
     }
 }
