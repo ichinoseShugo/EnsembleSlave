@@ -19,7 +19,7 @@ namespace EnsembleSlave.Bluetooth
         /// </summary>
         public ObservableCollection<RfcommDeviceDisplay> ResultCollection { get; private set; }
         private DeviceWatcher deviceWatcher;
-        private BluetoothManager bluetoothManager = new BluetoothManager();
+        private BluetoothManager bluetoothManager = null;
 
         private string GetBluetoothID()
         {
@@ -44,6 +44,7 @@ namespace EnsembleSlave.Bluetooth
         {
             InitializeComponent();
             mainWindow = main;
+            bluetoothManager = new BluetoothManager(mainWindow);
 
             Top = Constants.TopMargin;
             Left = mainWindow.ActualWidth;
@@ -103,8 +104,7 @@ namespace EnsembleSlave.Bluetooth
             bluetoothManager.Connect(resultsListView.SelectedItem as RfcommDeviceDisplay);
 
             StopWatcher();
-
-            WaitButton.IsEnabled = true;
+            
             SendButton.IsEnabled = true;
             DisconnectButton.IsEnabled = true;
         }

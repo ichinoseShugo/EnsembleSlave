@@ -17,7 +17,24 @@ namespace EnsembleSlave.Bluetooth
         private RfcommDeviceService ConnectService = null;
         private StreamSocket ConnectSocket = null;
         private BluetoothDevice bluetoothDevice;
-        
+        private StreamSocketListener socketListener;
+        private MainWindow main;
+
+        public BluetoothManager(MainWindow m)
+        {
+            main = m;
+        }
+
+        /// <summary> Clientとの接続が確立したとき呼び出されるイベント </summary>
+        public void OnConnectionReceived(StreamSocketListener sender, StreamSocketListenerConnectionReceivedEventArgs args)
+        {
+            //接続が確立した後はソケットリスナーは必要ないため閉じる
+            socketListener.Dispose();
+            socketListener = null;
+
+            Start(main);
+        }
+
         public async void Connect(RfcommDeviceDisplay deviceInfoDisp)
         {
             try
@@ -47,6 +64,10 @@ namespace EnsembleSlave.Bluetooth
             {
                 return;
             }
+
+            //OnConnectionReceivedをClientからの接続が確立したイベントとして登録
+            socketListener = new StreamSocketListener();
+            socketListener.ConnectionReceived += OnConnectionReceived;
 
             // Do various checks of the SDP record to make sure you are talking to a device that actually supports the Bluetooth Rfcomm Chat Service
             UInt16 SdpServiceNameAttributeId = 0x100;
