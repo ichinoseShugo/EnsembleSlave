@@ -51,5 +51,9 @@ namespace EnsembleSlave
             Colors.Navy,
             Colors.Purple
         };
+
+        public static byte ACOUSTIC_GRAND_PIANO = 0;
+        public static byte Marimba = 12;
+        public static byte AcousticGuitar_nylon = 24;
     }
 }

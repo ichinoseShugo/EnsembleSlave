@@ -166,9 +166,8 @@ namespace EnsembleSlave.Bluetooth
                     await ConnectSocket.InputStream.ReadAsync(buffer.AsBuffer(), 120, InputStreamOptions.Partial);
                     //受信したbyteデータを文字列に変換
                     string str = Encoding.GetEncoding("ASCII").GetString(buffer);
-                    //string str = Encoding.GetEncoding("UTF8").GetString(buffer);
-                    Console.WriteLine(str.Substring(0, 12));
-                    main.SetTarget(str.Substring(0, 12));
+
+                    main.SetTarget(str);
                 }
             }
             catch(Exception e)

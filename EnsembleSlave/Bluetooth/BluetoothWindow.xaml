@@ -13,14 +13,14 @@
         <Button x:Name="SendButton" IsEnabled="False" Click="SendButton_Click" Content="Send"/>
         <Button x:Name="DisconnectButton" IsEnabled="False" Click="DisconnectButton_Click" Content="Disconnect"/>
         <ListView x:Name="resultsListView" ItemsSource="{Binding}" SelectionChanged="ResultsListView_SelectionChanged" 
-                  HorizontalAlignment="Left" VerticalAlignment="Top" Width="640">
+                  HorizontalAlignment="Left" VerticalAlignment="Top">
             <ListView.View>
                 <GridView>
-                    <GridViewColumn DisplayMemberBinding="{Binding Path=Id}">
-                        <GridViewColumnHeader Content="Id" Tag="Id" />
-                    </GridViewColumn>
                     <GridViewColumn DisplayMemberBinding="{Binding Path=Name}">
                         <GridViewColumnHeader Content="Name" Tag="Name"/>
+                    </GridViewColumn>
+                    <GridViewColumn DisplayMemberBinding="{Binding Path=Id}">
+                        <GridViewColumnHeader Content="Id" Tag="Id" />
                     </GridViewColumn>
                 </GridView>
             </ListView.View>
