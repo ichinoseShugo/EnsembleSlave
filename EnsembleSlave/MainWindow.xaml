@@ -21,7 +21,7 @@
                 <TextBlock DockPanel.Dock="Top" Text="接続先デバイス" FontWeight="Bold" Margin="5,5,0,0"/>
                 <TextBlock DockPanel.Dock="Top" Text="なし" Margin="15,0,0,0"/>
             </DockPanel>
-            <StackPanel Margin="10" Height="255">
+            <StackPanel Margin="10">
                 <Button x:Name="PlayButton" Content="Play" Click="PlayButton_Click" Margin="5"/>
                 <Button x:Name="StopButton" Content="Stop" Click="StopButton_Click"  Margin="5"/>
                 <CheckBox x:Name="RepeatCheck" Content="Repeat" Margin="5" />
@@ -35,17 +35,15 @@
                     <StackPanel Orientation="Horizontal" Margin="5">
                         <StackPanel Margin="5">
                             <StackPanel Orientation="Horizontal">
-                                <TextBlock Text="Left Hand :"  FontWeight="Bold" VerticalAlignment="Center" Margin="5"/>
-                                <TextBlock x:Name="LeftInstrument" Text="instrument" VerticalAlignment="Center" Margin="5"/>
+                                <TextBlock Text="Left Hand :" FontWeight="Bold" VerticalAlignment="Center" Margin="5"/>
                             </StackPanel>
-                            <ListBox Height="50" />
+                            <ComboBox x:Name="LeftList" MinWidth="120" Margin="5" SelectedIndex="0" SelectionChanged="LefdtList_SelectionChanged"/>
                         </StackPanel>
                         <StackPanel Margin="5">
                             <StackPanel Orientation="Horizontal">
-                                <TextBlock Text="Right Hand :"  FontWeight="Bold" VerticalAlignment="Center" Margin="5"/>
-                                <TextBlock x:Name="RightInstrument" Text="instrument" VerticalAlignment="Center" Margin="5"/>
+                                <TextBlock Text="Right Hand :" FontWeight="Bold" VerticalAlignment="Center" Margin="5"/>
                             </StackPanel>
-                            <ListBox Height="50" />
+                            <ComboBox x:Name="RightList" MinWidth="120" Margin="5" SelectedIndex="0" SelectionChanged="RightList_SelectionChanged"/>
                         </StackPanel>
                     </StackPanel>
                 </StackPanel>

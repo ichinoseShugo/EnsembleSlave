@@ -12,6 +12,9 @@ namespace EnsembleSlave
     {
         MidiOutPort port;
 
+        /// <summary> 0:right 1:left </summary>
+        private byte[] midiNum = new byte[] { 0 , 0};
+
         public MidiManager()
         {
             port = new MidiOutPort(0);
@@ -35,6 +38,19 @@ namespace EnsembleSlave
             });
         }
 
+        public void OnNote(int side, byte note)
+        {
+            port.Send(new ProgramEvent()
+            {
+                Value = midiNum[side],
+            });
+            port.Send(new NoteEvent()
+            {
+                Note = note,
+                Gate = 240,
+            });
+        }
+
         public void OffNote(byte note)
         {
             port.Send(new NoteOffEvent()
@@ -49,6 +65,11 @@ namespace EnsembleSlave
             {
                 Value = value
             });
+        }
+
+        public void SetMidiNum(int side, byte value)
+        {
+            midiNum[side] = value;
         }
     }
 }

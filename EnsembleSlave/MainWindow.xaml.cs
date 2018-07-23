@@ -50,6 +50,8 @@ namespace EnsembleSlave
 
             Top = Constants.TopMargin;
             Left = 0;
+            LeftList.ItemsSource = Instruments.JNames;
+            RightList.ItemsSource = Instruments.JNames;
         }
 
         private void Window_Loaded(object sender, RoutedEventArgs e)
@@ -64,8 +66,7 @@ namespace EnsembleSlave
 
         private void Window_Closing(object sender, CancelEventArgs e)
         {
-            if (bluetoothWindow != null)
-                bluetoothWindow.Close();
+            if (bluetoothWindow != null) bluetoothWindow.Close();
             Uninitialize();
         }
 
@@ -517,7 +518,7 @@ namespace EnsembleSlave
             {
                 //tap音を出力
                 //RightCenter.y
-                midi.OnNote(currentFreqs[(int)((y/ColorImage.Height)*currentFreqs.Length)]);
+                midi.OnNote(0,currentFreqs[(int)((y/ColorImage.Height)*currentFreqs.Length)]);
                 //Console.Beep(440, 240);
             }
             var d = ((y / ColorImage.Height) * currentFreqs.Length);
@@ -676,9 +677,10 @@ namespace EnsembleSlave
         }
         #endregion
 
+        int side = 0;
         private void On_Click(object sender, RoutedEventArgs e)
         {
-            midi.OnNote(60);
+            midi.OnNote(side,60);
         }
 
         byte value = 0;
@@ -696,6 +698,19 @@ namespace EnsembleSlave
         {
             if(value != 0)
             value--;
+        }
+
+        private void RightList_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            if(RightList.SelectedIndex > 0) midi.SetMidiNum(0,Instruments.Numbers[RightList.SelectedIndex]);
+
+            side = 0;
+        }
+
+        private void LefdtList_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            if (LeftList.SelectedIndex > 0) midi.SetMidiNum(1, Instruments.Numbers[LeftList.SelectedIndex]);
+            side = 1;
         }
     }
 }
