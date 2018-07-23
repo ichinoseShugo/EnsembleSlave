@@ -104,7 +104,8 @@ namespace EnsembleSlave.Bluetooth
             bluetoothManager.Connect(resultsListView.SelectedItem as RfcommDeviceDisplay);
 
             StopWatcher();
-            
+
+            WaitButton.IsEnabled = true;
             SendButton.IsEnabled = true;
             DisconnectButton.IsEnabled = true;
         }

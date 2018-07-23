@@ -13,7 +13,7 @@
                 <Canvas x:Name="PartsCanvas"/>
             </Grid>
         </StackPanel>
-        <StackPanel Width="300">
+        <StackPanel >
             <DockPanel Margin="10">
                 <Button DockPanel.Dock="Left" x:Name="BluetoothButton" Content="BluetoothManager" Margin="5,20,5,20" Click="BluetoothButton_Click"/>
                 <TextBlock DockPanel.Dock="Top" Text="通信状態" FontWeight="Bold" Margin="5,5,0,0"/>
@@ -21,20 +21,32 @@
                 <TextBlock DockPanel.Dock="Top" Text="接続先デバイス" FontWeight="Bold" Margin="5,5,0,0"/>
                 <TextBlock DockPanel.Dock="Top" Text="なし" Margin="15,0,0,0"/>
             </DockPanel>
-            <StackPanel Margin="10">
+            <StackPanel Margin="10" Height="255">
                 <Button x:Name="PlayButton" Content="Play" Click="PlayButton_Click" Margin="5"/>
                 <Button x:Name="StopButton" Content="Stop" Click="StopButton_Click"  Margin="5"/>
                 <CheckBox x:Name="RepeatCheck" Content="Repeat" Margin="5" />
                 <TextBlock x:Name="Chord" Text="Chord Progress:" Margin="5"/>
                 <TextBlock x:Name="Index" Text="-1:" Margin="5"/>
+                <Button x:Name="On" Content="ON" Click="On_Click" />
+                <Button x:Name="Set" Content="set" Click="Set_Click" />
+                <Button x:Name="Plus" Content="plus" Click="Plus_Click" />
+                <Button x:Name="Minus" Content="minus" Click="Minus_Click" />
                 <StackPanel Orientation="Horizontal">
                     <StackPanel Orientation="Horizontal" Margin="5">
-                        <Image Width="50" Source="./Resources/GreyBack.png" Margin="5"/>
-                        <TextBlock Text="instrument" VerticalAlignment="Center" Margin="5"/>
-                    </StackPanel>
-                    <StackPanel Orientation="Horizontal" Margin="5">
-                        <Image Width="50" Source="./Resources/GreyBack.png" Margin="5"/>
-                        <TextBlock Text="instrument" VerticalAlignment="Center" Margin="5"/>
+                        <StackPanel Margin="5">
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="Left Hand :"  FontWeight="Bold" VerticalAlignment="Center" Margin="5"/>
+                                <TextBlock x:Name="LeftInstrument" Text="instrument" VerticalAlignment="Center" Margin="5"/>
+                            </StackPanel>
+                            <ListBox Height="50" />
+                        </StackPanel>
+                        <StackPanel Margin="5">
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="Right Hand :"  FontWeight="Bold" VerticalAlignment="Center" Margin="5"/>
+                                <TextBlock x:Name="RightInstrument" Text="instrument" VerticalAlignment="Center" Margin="5"/>
+                            </StackPanel>
+                            <ListBox Height="50" />
+                        </StackPanel>
                     </StackPanel>
                 </StackPanel>
                 </StackPanel>

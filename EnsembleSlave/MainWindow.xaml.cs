@@ -88,15 +88,14 @@ namespace EnsembleSlave
         {
             OpenBluetoothWindow();
         }
-
-        int tick = 0;
+        
         private void PlayTimer_Tick(object sender, EventArgs e)
         {
             DateTime now = dt.Add(sw.Elapsed);
             if (now > Target)
             {
                 StartEnsemble();
-                Console.WriteLine("start" + tick++);
+                Console.WriteLine("start ensemble");
                 playTimer.Stop();
             }
         }
@@ -180,24 +179,11 @@ namespace EnsembleSlave
         
         public void SetTarget(string time)
         {
-            
-            string[] str = time.Split(':');
-            Console.WriteLine(time);
-            Console.WriteLine(str[0]);
-            Console.WriteLine(str[1]);
-            Console.WriteLine(str[2]);
-            Console.WriteLine(str[3]);
-            if (str[3].Length == 3)
-            {
-                Target = DateTime.ParseExact(time, "HH:mm:ss:fff", null);
-            } else if (str[3].Length == 2)
-            {
-                Target = DateTime.ParseExact(time, "HH:mm:ss:ff", null);
-            } else if (str[3].Length == 1)
-            {
-                Target = DateTime.ParseExact(time, "HH:mm:ss:f", null);
-                //Console.WriteLine(Target.ToLongDateString());
-            }
+            string[] tokens = time.Split(':');
+            string targetStr = tokens[0] + ":" + tokens[1] + ":" + tokens[2] + ":" + tokens[3];
+            string format = "HH:mm:ss:";
+            for (int i = 0; i < tokens[3].Length; i++) format += "f";
+            Target = DateTime.ParseExact(targetStr, format, null);
             Console.WriteLine(Target.ToLongDateString());
             InitPlayTimer();
         }
@@ -689,5 +675,27 @@ namespace EnsembleSlave
             sw.Start();
         }
         #endregion
+
+        private void On_Click(object sender, RoutedEventArgs e)
+        {
+            midi.OnNote(60);
+        }
+
+        byte value = 0;
+        private void Set_Click(object sender, RoutedEventArgs e)
+        {
+            midi.ProgramChange(value);
+        }
+
+        private void Plus_Click(object sender, RoutedEventArgs e)
+        {
+            value++;
+        }
+
+        private void Minus_Click(object sender, RoutedEventArgs e)
+        {
+            if(value != 0)
+            value--;
+        }
     }
 }
