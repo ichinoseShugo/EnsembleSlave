@@ -57,7 +57,7 @@ namespace EnsembleSlave
 
         private void Window_Loaded(object sender, RoutedEventArgs e)
         {
-            LoadChordProgress("cp1.csv");
+            LoadChordProgress("kanon.csv");
             InitEnsembleTimer();
             InitializeRealSense();
             OpenBluetoothWindow();
@@ -343,21 +343,26 @@ namespace EnsembleSlave
             config.SubscribeGesture(OnFiredGesture);
             config.ApplyChanges();
             config.Update();
+            gestureTimer.Start();
         }
 
-        int handid = -1;
+        public System.Diagnostics.Stopwatch gestureTimer = new System.Diagnostics.Stopwatch();
+        //long preOccuredGesture = 0;
         private void OnFiredGesture(PXCMHandData.GestureData gestureData)
         {
+            //preOccuredGesture = sw.ElapsedMilliseconds;
             int side = Array.IndexOf(side2id, gestureData.handId);
-            if (gestureData.name == "thumb_up")
+
+            if (gestureData.name == "thumb_up" && gestureTimer.ElapsedMilliseconds > 1000)
             {
                 Dispatcher.BeginInvoke(new Action(() =>
                 {
                     if (side == 0) {
-                        RightList.SelectedIndex = ++RightList.SelectedIndex % RightList.Items.Count;
+                        Console.WriteLine(RightList.SelectedIndex + ":" + ((RightList.SelectedIndex + 1) % RightList.Items.Count));
+                        RightList.SelectedIndex = (RightList.SelectedIndex + 1) % RightList.Items.Count;
                     }
                     if (side == 1) {
-                        LeftList.SelectedIndex = ++LeftList.SelectedIndex % LeftList.Items.Count;
+                        LeftList.SelectedIndex = (LeftList.SelectedIndex + 1) % LeftList.Items.Count;
                     }
                 }));
             }
@@ -367,14 +372,15 @@ namespace EnsembleSlave
                 {
                     if (side == 0)
                     {
-                        RightList.SelectedIndex = --RightList.SelectedIndex % RightList.Items.Count;
+                        //RightList.SelectedIndex = (RightList.SelectedIndex - 1) % RightList.Items.Count;
                     }
                     if (side == 1)
                     {
-                        LeftList.SelectedIndex = --LeftList.SelectedIndex % LeftList.Items.Count;
+                        //LeftList.SelectedIndex = (LeftList.SelectedIndex - 1) % LeftList.Items.Count;
                     }
                 }));
             }
+            gestureTimer.Restart();
         }
 
         /// <summary> RealSesnseの更新 </summary>
@@ -467,8 +473,8 @@ namespace EnsembleSlave
                     continue;
                 }
                 //Console.WriteLine(hand.QueryUniqueId());
-                Console.WriteLine((int)hand.QueryBodySide() - 1);
-                side2id[(int)hand.QueryBodySide()-1] = hand.QueryUniqueId();
+                int side = (int)hand.QueryBodySide();
+                if(side > 0)side2id[side-1] = hand.QueryUniqueId();
                 GetFingerData(hand, PXCMHandData.JointType.JOINT_MIDDLE_TIP);
             }
         }
@@ -560,7 +566,7 @@ namespace EnsembleSlave
                 && Math.Pow(Math.Pow(RightCenter.x - preRightCenter.x, 2)                 // 手のひらの速度が0.6m/s以上
                                    + Math.Pow(RightCenter.y - preRightCenter.y, 2)
                                    + Math.Pow(RightCenter.z * 1000 - preRightCenter.z * 1000, 2), 0.5) > 0.01
-                && rsw.ElapsedMilliseconds > 200
+                && rsw.ElapsedMilliseconds > 240
                )
             {
                 //tap音を出力
@@ -581,7 +587,7 @@ namespace EnsembleSlave
                 && Math.Pow(Math.Pow(LeftCenter.x - preLeftCenter.x, 2)                 // 手のひらの速度が0.6m/s以上
                                    + Math.Pow(LeftCenter.y - preLeftCenter.y, 2)
                                    + Math.Pow(LeftCenter.z * 1000 - preLeftCenter.z * 1000, 2), 0.5) > 0.01
-                && lsw.ElapsedMilliseconds > 200
+                && lsw.ElapsedMilliseconds > 240
                )
             {
                 //tap音を出力

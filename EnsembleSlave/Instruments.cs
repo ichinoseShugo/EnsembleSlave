@@ -15,7 +15,7 @@ namespace EnsembleSlave
         public static byte ACOUSTIC_GUITAR_NYLON = 24;
         public static byte ACOUSTIC_BASE = 32;
         //public static byte VIOLIN = 40;
-        public static byte TRUMPET = 56;
+        //public static byte TRUMPET = 56;
         //public static byte FLUTE = 73;
         public static byte WOODBLOCK = 115;
 
