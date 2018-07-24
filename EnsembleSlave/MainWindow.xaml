@@ -17,9 +17,9 @@
             <DockPanel Margin="10">
                 <Button DockPanel.Dock="Left" x:Name="BluetoothButton" Content="BluetoothManager" Margin="5,20,5,20" Click="BluetoothButton_Click"/>
                 <TextBlock DockPanel.Dock="Top" Text="通信状態" FontWeight="Bold" Margin="5,5,0,0"/>
-                <TextBlock DockPanel.Dock="Top" Text="未接続" Margin="15,0,0,0" />
+                <TextBlock DockPanel.Dock="Top" x:Name="ComState" Text="未接続" Margin="15,0,0,0" />
                 <TextBlock DockPanel.Dock="Top" Text="接続先デバイス" FontWeight="Bold" Margin="5,5,0,0"/>
-                <TextBlock DockPanel.Dock="Top" Text="なし" Margin="15,0,0,0"/>
+                <TextBlock DockPanel.Dock="Top" x:Name="ConnectDevice" Text="なし" Margin="15,0,0,0"/>
             </DockPanel>
             <StackPanel Margin="10">
                 <Button x:Name="PlayButton" Content="Play" Click="PlayButton_Click" Margin="5"/>

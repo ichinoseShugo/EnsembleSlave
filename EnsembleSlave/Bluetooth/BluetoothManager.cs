@@ -87,6 +87,8 @@ namespace EnsembleSlave.Bluetooth
             {
                 MessageBox.Show("socket接続がおかしい");
             }
+            main.ComState.Text = "演奏開始待機中";
+            main.ConnectDevice.Text = deviceInfoDisp.Name.ToString();
             Start(main);
         }
 
@@ -175,6 +177,7 @@ namespace EnsembleSlave.Bluetooth
                     //受信したbyteデータを文字列に変換
                     string str = Encoding.GetEncoding("ASCII").GetString(buffer);
                     main.SetTarget(str);
+                    main.ComState.Text = "演奏開始";
                 }
             }
             catch(Exception e)

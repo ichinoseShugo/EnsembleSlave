@@ -467,6 +467,7 @@ namespace EnsembleSlave
                     continue;
                 }
                 //Console.WriteLine(hand.QueryUniqueId());
+                Console.WriteLine((int)hand.QueryBodySide() - 1);
                 side2id[(int)hand.QueryBodySide()-1] = hand.QueryUniqueId();
                 GetFingerData(hand, PXCMHandData.JointType.JOINT_MIDDLE_TIP);
             }
@@ -474,8 +475,7 @@ namespace EnsembleSlave
 
         /// <summary> 指のデータを取得する </summary>
         private void GetFingerData(PXCMHandData.IHand hand, PXCMHandData.JointType jointType)
-        {
-            
+        { 
             PXCMHandData.JointData jointData;
             var sts = hand.QueryTrackedJoint(jointType, out jointData);
             if (sts < pxcmStatus.PXCM_STATUS_NO_ERROR)
