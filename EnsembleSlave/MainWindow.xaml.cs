@@ -51,8 +51,7 @@ namespace EnsembleSlave
 
             Top = Constants.TopMargin;
             Left = 0;
-            LeftList.ItemsSource = Instruments.JNames;
-            RightList.ItemsSource = Instruments.JNames;
+            InstrumentsList.ItemsSource = Instruments.JNames;
         }
 
         private void Window_Loaded(object sender, RoutedEventArgs e)
@@ -113,7 +112,6 @@ namespace EnsembleSlave
                 {
                     ensembleTimer.Stop();
                     PlayButton.IsEnabled = true;
-                    Chord.Text = "Chord Progress:";
                     return;
                 }
             }
@@ -228,7 +226,6 @@ namespace EnsembleSlave
             listIndex = 0;
             ensembleTimer.Stop();
             PlayButton.IsEnabled = true;
-            Chord.Text = "Chord Progress:";
         }
 
         private void UpdateChord()
@@ -357,13 +354,7 @@ namespace EnsembleSlave
             {
                 Dispatcher.BeginInvoke(new Action(() =>
                 {
-                    if (side == 0) {
-                        Console.WriteLine(RightList.SelectedIndex + ":" + ((RightList.SelectedIndex + 1) % RightList.Items.Count));
-                        RightList.SelectedIndex = (RightList.SelectedIndex + 1) % RightList.Items.Count;
-                    }
-                    if (side == 1) {
-                        LeftList.SelectedIndex = (LeftList.SelectedIndex + 1) % LeftList.Items.Count;
-                    }
+                    InstrumentsList.SelectedIndex = (InstrumentsList.SelectedIndex + 1) % InstrumentsList.Items.Count;
                 }));
             }
             if (gestureData.name == "thumb_down")
@@ -566,11 +557,11 @@ namespace EnsembleSlave
                 && Math.Pow(Math.Pow(RightCenter.x - preRightCenter.x, 2)                 // 手のひらの速度が0.6m/s以上
                                    + Math.Pow(RightCenter.y - preRightCenter.y, 2)
                                    + Math.Pow(RightCenter.z * 1000 - preRightCenter.z * 1000, 2), 0.5) > 0.01
-                && rsw.ElapsedMilliseconds > 240
+                && rsw.ElapsedMilliseconds > 300
                )
             {
                 //tap音を出力
-                midi.OnNote(1,currentFreqs[(int)(((ColorImage.Height-mcp.y)/(ColorImage.Height+0.01))*currentFreqs.Length)]);
+                midi.OnNote(currentFreqs[(int)(((ColorImage.Height-mcp.y)/(ColorImage.Height+0.01))*currentFreqs.Length)]);
                 rsw.Restart();
             }
             //var c = ColorImage.Height - y;
@@ -587,11 +578,11 @@ namespace EnsembleSlave
                 && Math.Pow(Math.Pow(LeftCenter.x - preLeftCenter.x, 2)                 // 手のひらの速度が0.6m/s以上
                                    + Math.Pow(LeftCenter.y - preLeftCenter.y, 2)
                                    + Math.Pow(LeftCenter.z * 1000 - preLeftCenter.z * 1000, 2), 0.5) > 0.01
-                && lsw.ElapsedMilliseconds > 240
+                && lsw.ElapsedMilliseconds > 300
                )
             {
                 //tap音を出力
-                midi.OnNote(0, currentFreqs[(int)(((ColorImage.Height - mcp.y) / (ColorImage.Height + 0.01)) * currentFreqs.Length)]);
+                midi.OnNote(currentFreqs[(int)(((ColorImage.Height - mcp.y) / (ColorImage.Height + 0.01)) * currentFreqs.Length)]);
                 lsw.Restart();
             }
 
@@ -781,14 +772,9 @@ namespace EnsembleSlave
             value--;
         }
 
-        private void RightList_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        private void InstrumentsList_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
-            if(RightList.SelectedIndex > 0) midi.SetMidiNum(1,Instruments.Numbers[RightList.SelectedIndex]);
-        }
-
-        private void LefdtList_SelectionChanged(object sender, SelectionChangedEventArgs e)
-        {
-            if (LeftList.SelectedIndex > 0) midi.SetMidiNum(0, Instruments.Numbers[LeftList.SelectedIndex]);
+            if (InstrumentsList.SelectedIndex > 0) midi.ProgramChange(Instruments.Numbers[InstrumentsList.SelectedIndex]);
         }
     }
 }
