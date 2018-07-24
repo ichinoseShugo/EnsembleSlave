@@ -38,12 +38,13 @@ namespace EnsembleSlave
         PXCMCapture.Device device;
         PXCMHandModule handAnalyzer;
         PXCMHandData handData;
+        PXCMHandConfiguration config;
 
         private BluetoothWindow bluetoothWindow;
         public DateTime Target;
         public DateTime dt = new DateTime(1900, 1, 1);
         public System.Diagnostics.Stopwatch sw = new System.Diagnostics.Stopwatch();
-
+        
         public MainWindow()
         {
             InitializeComponent();
@@ -60,8 +61,10 @@ namespace EnsembleSlave
             InitEnsembleTimer();
             InitializeRealSense();
             OpenBluetoothWindow();
-
+            
             CompositionTarget.Rendering += CompositionTarget_Rendering;
+            rsw.Start();
+            lsw.Start();
         }
 
         private void Window_Closing(object sender, CancelEventArgs e)
@@ -141,8 +144,11 @@ namespace EnsembleSlave
                 handAnalyzer.Dispose();
                 handAnalyzer = null;
             }
-            //handConfig.UnsubscribeGesture(OnFiredGesture);
-            //handConfig.Dispose();
+            if (config != null)
+            {
+                config.UnsubscribeGesture(OnFiredGesture);
+                config.Dispose();
+            }
         }
 
         #region Midi関連メソッド
@@ -232,7 +238,7 @@ namespace EnsembleSlave
             {
                 freqs += freq.ToString() + " ";
             }
-            Chord.Text = freqs;
+            //Chord.Text = freqs;
             currentFreqs = freqsList[listIndex];
             listIndex++;
         }
@@ -326,20 +332,49 @@ namespace EnsembleSlave
             }
 
             // 手の検出の設定
-            var config = handAnalyzer.CreateActiveConfiguration();
-            config.EnableSegmentationImage(true);
+            config = handAnalyzer.CreateActiveConfiguration();
+            //config.EnableSegmentationImage(true);
+            config.EnableJointSpeed(PXCMHandData.JointType.JOINT_MIDDLE_TIP,PXCMHandData.JointSpeedType.JOINT_SPEED_AVERAGE, 100);
             //config.EnableGesture("v_sign");
-            //config.EnableGesture("thumb_up");
-            //config.EnableGesture("thumb_down");
+            config.EnableGesture("thumb_up");
+            config.EnableGesture("thumb_down");
             //config.EnableGesture("tap");
             //config.EnableGesture("fist");
-            //config.SubscribeGesture(OnFiredGesture);
+            config.SubscribeGesture(OnFiredGesture);
             config.ApplyChanges();
             config.Update();
         }
 
+        int handid = -1;
         private void OnFiredGesture(PXCMHandData.GestureData gestureData)
         {
+            int side = Array.IndexOf(side2id, gestureData.handId);
+            if (gestureData.name == "thumb_up")
+            {
+                Dispatcher.BeginInvoke(new Action(() =>
+                {
+                    if (side == 0) {
+                        RightList.SelectedIndex = ++RightList.SelectedIndex % RightList.Items.Count;
+                    }
+                    if (side == 1) {
+                        LeftList.SelectedIndex = ++LeftList.SelectedIndex % LeftList.Items.Count;
+                    }
+                }));
+            }
+            if (gestureData.name == "thumb_down")
+            {
+                Dispatcher.BeginInvoke(new Action(() =>
+                {
+                    if (side == 0)
+                    {
+                        RightList.SelectedIndex = --RightList.SelectedIndex % RightList.Items.Count;
+                    }
+                    if (side == 1)
+                    {
+                        LeftList.SelectedIndex = --LeftList.SelectedIndex % LeftList.Items.Count;
+                    }
+                }));
+            }
         }
 
         /// <summary> RealSesnseの更新 </summary>
@@ -409,6 +444,7 @@ namespace EnsembleSlave
             colorFrame.ReleaseAccess(data);
         }
 
+        int[] side2id = new int[2];
         /// <summary> 手のデータを更新する </summary>
         private void UpdateHandFrame()
         {
@@ -430,19 +466,21 @@ namespace EnsembleSlave
                 {
                     continue;
                 }
+                //Console.WriteLine(hand.QueryUniqueId());
+                side2id[(int)hand.QueryBodySide()-1] = hand.QueryUniqueId();
                 GetFingerData(hand, PXCMHandData.JointType.JOINT_MIDDLE_TIP);
-                if(ensembleTimer.IsEnabled)DetectTap(hand);
             }
         }
 
         /// <summary> 指のデータを取得する </summary>
-        private bool GetFingerData(PXCMHandData.IHand hand, PXCMHandData.JointType jointType)
+        private void GetFingerData(PXCMHandData.IHand hand, PXCMHandData.JointType jointType)
         {
+            
             PXCMHandData.JointData jointData;
             var sts = hand.QueryTrackedJoint(jointType, out jointData);
             if (sts < pxcmStatus.PXCM_STATUS_NO_ERROR)
             {
-                return false;
+                return;
             }
 
             // Depth座標系をカラー座標系に変換する
@@ -456,18 +494,26 @@ namespace EnsembleSlave
             var masp = hand.QueryMassCenterImage();
             var mdp = new PXCMPoint3DF32[1];
             var mcp = new PXCMPointF32[1];
+
             mdp[0].x = masp.x;
             mdp[0].y = masp.y;
             mdp[0].z = hand.QueryMassCenterWorld().z * 1000;
+
             projection.MapDepthToColor(mdp, mcp);
             //Console.WriteLine(mcp[0].x);
             AddEllipse(new Point(mcp[0].x, mcp[0].y), 10, Brushes.Red, 1);
             colorPoint = mcp;
 
-            AddEllipse(new Point(colorPoint[0].x, colorPoint[0].y), 5, Brushes.White, 1);
+            //AddEllipse(new Point(colorPoint[0].x, colorPoint[0].y), 5, Brushes.White, 1);
 
-            return true;
+            if (ensembleTimer.IsEnabled) DetectTap(hand,mcp[0]);
+            //if (ensembleTimer.IsEnabled) RecogMove(hand,mcp[0]);
+            //RecogMove(hand,mcp[0]);
         }
+
+        #region tap
+        public System.Diagnostics.Stopwatch rsw = new System.Diagnostics.Stopwatch();
+        public System.Diagnostics.Stopwatch lsw = new System.Diagnostics.Stopwatch();
 
         public PXCMPoint3DF32 RightCenter = new PXCMPoint3DF32();        //手のひら
         public PXCMPoint3DF32 preRightCenter = new PXCMPoint3DF32();
@@ -477,34 +523,34 @@ namespace EnsembleSlave
         public PXCMPoint3DF32 preRightMiddle = new PXCMPoint3DF32();
         public PXCMPoint3DF32 LeftMiddle = new PXCMPoint3DF32();
         public PXCMPoint3DF32 preLeftMiddle = new PXCMPoint3DF32();
-
-        private void DetectTap(PXCMHandData.IHand hand)
+        private void DetectTap(PXCMHandData.IHand hand , PXCMPointF32 mcp)
         {
-            PXCMHandData.JointData MiddleData;
-            PXCMHandData.JointData CenterData;
-            float y = 0;
+            PXCMHandData.JointData midData;
+            PXCMHandData.JointData cntData;
 
             //指のデータをとってくる(depth)
             //ユーザの右手のデータ
             if (hand.QueryBodySide() == PXCMHandData.BodySideType.BODY_SIDE_LEFT)
             {
-                hand.QueryTrackedJoint(PXCMHandData.JointType.JOINT_CENTER, out CenterData);
-                RightCenter = CenterData.positionWorld;
-                hand.QueryTrackedJoint(PXCMHandData.JointType.JOINT_MIDDLE_TIP, out MiddleData);
-                RightMiddle = MiddleData.positionWorld;
-                y = MiddleData.positionImage.y;
-                //RightCenter = hand.QueryMassCenterWorld();
+                hand.QueryTrackedJoint(PXCMHandData.JointType.JOINT_CENTER, out cntData);
+                RightCenter = cntData.positionWorld;
+                hand.QueryTrackedJoint(PXCMHandData.JointType.JOINT_MIDDLE_TIP, out midData);
+                RightMiddle = midData.positionWorld;
             }
 
             //ユーザの左手のデータ
             if (hand.QueryBodySide() == PXCMHandData.BodySideType.BODY_SIDE_RIGHT)
             {
-                hand.QueryTrackedJoint(PXCMHandData.JointType.JOINT_CENTER, out CenterData);
-                LeftCenter = CenterData.positionWorld;
-                hand.QueryTrackedJoint(PXCMHandData.JointType.JOINT_MIDDLE_TIP, out MiddleData);
-                LeftMiddle = MiddleData.positionWorld;
+                hand.QueryTrackedJoint(PXCMHandData.JointType.JOINT_CENTER, out cntData);
+                LeftCenter = cntData.positionWorld;
+                hand.QueryTrackedJoint(PXCMHandData.JointType.JOINT_MIDDLE_TIP, out midData);
+                LeftMiddle = midData.positionWorld;
             }
 
+            if (mcp.y < 0) mcp.y = 0;
+            if (mcp.y > ColorImage.Height) mcp.y = (float)ColorImage.Height;
+
+            //Console.WriteLine(rsw.ElapsedMilliseconds);
             //if文の条件を記述(前の指のデータと比較)
             // ユーザの右手でタップ
             if (-RightMiddle.z + preRightMiddle.z > 0.02                                  // 1F(約1/60秒)あたりの深度の変化が0.02m以上
@@ -514,32 +560,33 @@ namespace EnsembleSlave
                 && Math.Pow(Math.Pow(RightCenter.x - preRightCenter.x, 2)                 // 手のひらの速度が0.6m/s以上
                                    + Math.Pow(RightCenter.y - preRightCenter.y, 2)
                                    + Math.Pow(RightCenter.z * 1000 - preRightCenter.z * 1000, 2), 0.5) > 0.01
+                && rsw.ElapsedMilliseconds > 200
                )
             {
                 //tap音を出力
-                //RightCenter.y
-                midi.OnNote(0,currentFreqs[(int)((y/ColorImage.Height)*currentFreqs.Length)]);
-                //Console.Beep(440, 240);
+                midi.OnNote(1,currentFreqs[(int)(((ColorImage.Height-mcp.y)/(ColorImage.Height+0.01))*currentFreqs.Length)]);
+                rsw.Restart();
             }
-            var d = ((y / ColorImage.Height) * currentFreqs.Length);
-            Index.Text = y + "\n" + d + "\n" + (int)d;
-
+            //var c = ColorImage.Height - y;
+            //var e = c / ColorImage.Height;
+            //var d = e * currentFreqs.Length;
+            //Index.Text = y + "\n" + d + "\n" + (int)d;
+            //Index.Text = mcp.y.ToString();
+            //Chord.Text = e.ToString();
             // ユーザの左手でタップ
-            if (-LeftMiddle.z + preLeftMiddle.z > 0.02                                                // 1F(約1/60秒)あたりの深度の変化が0.02m以上
+            if (-LeftMiddle.z + preLeftMiddle.z > 0.02                                  // 1F(約1/60秒)あたりの深度の変化が0.02m以上
                 && Math.Pow(Math.Pow(LeftMiddle.x - preLeftMiddle.x, 2)                 // 指先の速度が1.8m/s以上
-                                   + Math.Pow(RightMiddle.y - preLeftMiddle.y, 2)
-                                   + Math.Pow(RightMiddle.z - preLeftMiddle.z, 2), 0.5) > 0.03
-                && Math.Pow(Math.Pow(RightCenter.x - preLeftCenter.x, 2)                 // 手のひらの速度が0.6m/s以上
-                                   + Math.Pow(RightCenter.y - preLeftCenter.y, 2)
-                                   + Math.Pow(RightCenter.z - preLeftCenter.z, 2), 0.5) > 0.01
-                && Math.Pow(Math.Pow(RightCenter.x - preLeftCenter.x, 2)                 // 手のひらの速度が1.5m/s以下
-                                   + Math.Pow(RightCenter.y - preLeftCenter.y, 2)
-                                   + Math.Pow(RightCenter.z - preLeftCenter.z, 2), 0.5) < 0.025
+                                   + Math.Pow(LeftMiddle.y - preLeftMiddle.y, 2)
+                                   + Math.Pow(LeftMiddle.z * 1000 - preLeftMiddle.z * 1000, 2), 0.5) > 0.03
+                && Math.Pow(Math.Pow(LeftCenter.x - preLeftCenter.x, 2)                 // 手のひらの速度が0.6m/s以上
+                                   + Math.Pow(LeftCenter.y - preLeftCenter.y, 2)
+                                   + Math.Pow(LeftCenter.z * 1000 - preLeftCenter.z * 1000, 2), 0.5) > 0.01
+                && lsw.ElapsedMilliseconds > 200
                )
             {
                 //tap音を出力
-                //midiManager.OnNote(60);
-                //Console.Beep(440, 240);
+                midi.OnNote(0, currentFreqs[(int)(((ColorImage.Height - mcp.y) / (ColorImage.Height + 0.01)) * currentFreqs.Length)]);
+                lsw.Restart();
             }
 
             //Console.WriteLine("RightCenter.x:" + RightCenter.x);
@@ -566,6 +613,34 @@ namespace EnsembleSlave
             preLeftMiddle.y = LeftMiddle.y;
             preLeftMiddle.z = LeftMiddle.z;
 
+        }
+        #endregion
+
+        PXCMHandData.JointData[] middleData = new PXCMHandData.JointData[2];
+        PXCMHandData.JointData[] oldMiddleData = new PXCMHandData.JointData[2];
+
+        private void RecogMove(PXCMHandData.IHand hand, PXCMPointF32 mcp)
+        {
+            int side = (int)hand.QueryBodySide() - 1;
+            if (side < 0) return;
+
+            hand.QueryTrackedJoint(PXCMHandData.JointType.JOINT_MIDDLE_TIP, out middleData[side]);
+            if (oldMiddleData[side] == null)
+            {
+                oldMiddleData[side] = middleData[side];
+                return;
+            }
+            //Console.WriteLine(middleData[side].speed.x);
+            var distance = Math.Pow(
+                Math.Pow(middleData[side].positionWorld.x - oldMiddleData[side].positionWorld.x, 2)
+                + Math.Pow(middleData[side].positionWorld.y - oldMiddleData[side].positionWorld.y, 2)
+                + Math.Pow((middleData[side].positionWorld.z - oldMiddleData[side].positionWorld.z) * 1000, 2),
+                0.5 );
+
+            oldMiddleData[side] = middleData[side];
+            //Console.Write(middleData[side].positionImage.x + ":" + oldMiddleData[side].positionImage.x + ":");
+            //Console.WriteLine(middleData[side].positionImage.x - oldMiddleData[side].positionImage.x);
+            //oldMiddleData = middleData;
         }
 
         /// <summary> 円を表示する </summary>
@@ -702,15 +777,12 @@ namespace EnsembleSlave
 
         private void RightList_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
-            if(RightList.SelectedIndex > 0) midi.SetMidiNum(0,Instruments.Numbers[RightList.SelectedIndex]);
-
-            side = 0;
+            if(RightList.SelectedIndex > 0) midi.SetMidiNum(1,Instruments.Numbers[RightList.SelectedIndex]);
         }
 
         private void LefdtList_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
-            if (LeftList.SelectedIndex > 0) midi.SetMidiNum(1, Instruments.Numbers[LeftList.SelectedIndex]);
-            side = 1;
+            if (LeftList.SelectedIndex > 0) midi.SetMidiNum(0, Instruments.Numbers[LeftList.SelectedIndex]);
         }
     }
 }

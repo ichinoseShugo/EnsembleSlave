@@ -198,6 +198,7 @@
     </None>
     <None Include="References\Windows.winmd" />
     <None Include="Resources\cp1.csv" />
+    <None Include="Resources\kanon.csv" />
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />

@@ -27,10 +27,6 @@
                 <CheckBox x:Name="RepeatCheck" Content="Repeat" Margin="5" />
                 <TextBlock x:Name="Chord" Text="Chord Progress:" Margin="5"/>
                 <TextBlock x:Name="Index" Text="-1:" Margin="5"/>
-                <Button x:Name="On" Content="ON" Click="On_Click" />
-                <Button x:Name="Set" Content="set" Click="Set_Click" />
-                <Button x:Name="Plus" Content="plus" Click="Plus_Click" />
-                <Button x:Name="Minus" Content="minus" Click="Minus_Click" />
                 <StackPanel Orientation="Horizontal">
                     <StackPanel Orientation="Horizontal" Margin="5">
                         <StackPanel Margin="5">
