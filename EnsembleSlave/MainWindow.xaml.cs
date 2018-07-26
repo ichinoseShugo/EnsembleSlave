@@ -98,8 +98,8 @@ namespace EnsembleSlave
             if (now > Target)
             {
                 StartEnsemble();
-                Console.WriteLine("start ensemble");
                 playTimer.Stop();
+                Console.WriteLine("start ensemble : " + now.Second + ":" + now.Millisecond);
             }
         }
 
@@ -107,15 +107,21 @@ namespace EnsembleSlave
         {
             if (listIndex >= timeList.Count)
             {
-                listIndex = 0;
+                StopEnsemble();
+                //listIndex = 0;
                 if (RepeatCheck.IsChecked == false)
                 {
-                    ensembleTimer.Stop();
-                    PlayButton.IsEnabled = true;
+                    //ensembleTimer.Stop();
+                    //PlayButton.IsEnabled = true;
                     return;
                 }
             }
             UpdateChord();
+            int sec = DateTime.Now.Second;
+            int mill = DateTime.Now.Millisecond;
+            DateTime now = dt.Add(sw.Elapsed);
+            Console.WriteLine("local update:" + sec + mill);
+            Console.WriteLine("ntp update:" + now.Second + ":" + now.Millisecond);
         }
 
         /// <summary> 終了処理 </summary>
@@ -184,13 +190,22 @@ namespace EnsembleSlave
         
         public void SetTarget(string time)
         {
+            Console.WriteLine(time);
             string[] tokens = time.Split(':');
             string targetStr = tokens[0] + ":" + tokens[1] + ":" + tokens[2] + ":" + tokens[3];
-            string format = "HH:mm:ss:";
+            string format = "";
+            for (int i = 0; i < tokens[0].Length; i++) format += "H";
+            format += ":";
+            for (int i = 0; i < tokens[1].Length; i++) format += "m";
+            format += ":";
+            for (int i = 0; i < tokens[2].Length; i++) format += "s";
+            format += ":";
             for (int i = 0; i < tokens[3].Length; i++) format += "f";
+            format += ":";
+            Console.WriteLine(format);
             Target = DateTime.ParseExact(targetStr, format, null);
-            Console.WriteLine(Target.ToLongDateString());
             InitPlayTimer();
+            //Console.WriteLine(Target.ToLongDateString());
         }
 
         private void InitPlayTimer()
@@ -217,25 +232,39 @@ namespace EnsembleSlave
         public void StartEnsemble()
         {
             UpdateChord();
+
             ensembleTimer.Start();
+
+            int sec = DateTime.Now.Second;
+            int mill = DateTime.Now.Millisecond;
+            DateTime now = dt.Add(sw.Elapsed);
+            Console.WriteLine("local start2 :" + sec + ":" + mill);
+            Console.WriteLine("ntp start2 :" + now.Second + ":" + now.Millisecond);
             PlayButton.IsEnabled = false;
         }
 
         public void StopEnsemble()
         {
-            listIndex = 0;
             ensembleTimer.Stop();
+            int sec = DateTime.Now.Second;
+            int mill = DateTime.Now.Millisecond;
+            DateTime now = dt.Add(sw.Elapsed);
+            Console.WriteLine("local stop:"+sec+mill);
+            Console.WriteLine("ntp stop:" + now.Second + ":" + now.Millisecond);
+            listIndex = 0;
             PlayButton.IsEnabled = true;
         }
 
         private void UpdateChord()
         {
+            /*
             string freqs = "Chord Progress: ";
             foreach (byte freq in freqsList[listIndex])
             {
                 freqs += freq.ToString() + " ";
             }
             //Chord.Text = freqs;
+            */
             currentFreqs = freqsList[listIndex];
             listIndex++;
         }
@@ -332,9 +361,9 @@ namespace EnsembleSlave
             config = handAnalyzer.CreateActiveConfiguration();
             //config.EnableSegmentationImage(true);
             config.EnableJointSpeed(PXCMHandData.JointType.JOINT_MIDDLE_TIP,PXCMHandData.JointSpeedType.JOINT_SPEED_AVERAGE, 100);
-            //config.EnableGesture("v_sign");
+            config.EnableGesture("v_sign");
             config.EnableGesture("thumb_up");
-            config.EnableGesture("thumb_down");
+            //config.EnableGesture("thumb_down");
             //config.EnableGesture("tap");
             //config.EnableGesture("fist");
             config.SubscribeGesture(OnFiredGesture);
@@ -345,11 +374,19 @@ namespace EnsembleSlave
 
         public System.Diagnostics.Stopwatch gestureTimer = new System.Diagnostics.Stopwatch();
         //long preOccuredGesture = 0;
+        bool playEnsemble = false;
         private void OnFiredGesture(PXCMHandData.GestureData gestureData)
         {
             //preOccuredGesture = sw.ElapsedMilliseconds;
             int side = Array.IndexOf(side2id, gestureData.handId);
-
+            if (gestureData.name == "v_sign" && !playEnsemble)
+            {
+                Dispatcher.BeginInvoke(new Action(() =>
+                {
+                    StartEnsemble();
+                }));
+                playEnsemble = true;
+            }
             if (gestureData.name == "thumb_up" && gestureTimer.ElapsedMilliseconds > 1000)
             {
                 Dispatcher.BeginInvoke(new Action(() =>
@@ -748,29 +785,6 @@ namespace EnsembleSlave
             sw.Start();
         }
         #endregion
-
-        int side = 0;
-        private void On_Click(object sender, RoutedEventArgs e)
-        {
-            midi.OnNote(side,60);
-        }
-
-        byte value = 0;
-        private void Set_Click(object sender, RoutedEventArgs e)
-        {
-            midi.ProgramChange(value);
-        }
-
-        private void Plus_Click(object sender, RoutedEventArgs e)
-        {
-            value++;
-        }
-
-        private void Minus_Click(object sender, RoutedEventArgs e)
-        {
-            if(value != 0)
-            value--;
-        }
 
         private void InstrumentsList_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
