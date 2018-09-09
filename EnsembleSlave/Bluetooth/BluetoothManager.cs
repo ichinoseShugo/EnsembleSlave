@@ -87,6 +87,7 @@ namespace EnsembleSlave.Bluetooth
             {
                 MessageBox.Show("socket接続がおかしい");
             }
+            Console.WriteLine("Connect");
             main.ComState.Text = "演奏開始待機中";
             main.ConnectDevice.Text = deviceInfoDisp.Name.ToString();
             Start(main);
@@ -170,6 +171,7 @@ namespace EnsembleSlave.Bluetooth
             {
                 if (ConnectSocket != null)
                 {
+                    Console.WriteLine("update ntp");
                     main.UpdateNTPTime();
                     byte[] buffer = new byte[120];
                     //InputStreamのデータを変数bufferに格納

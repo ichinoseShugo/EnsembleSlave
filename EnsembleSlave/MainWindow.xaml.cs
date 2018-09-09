@@ -42,7 +42,7 @@ namespace EnsembleSlave
 
         private BluetoothWindow bluetoothWindow;
         public DateTime Target;
-        public DateTime dt = new DateTime(1900, 1, 1);
+        public DateTime ntpBasicTime = new DateTime(1900, 1, 1);
         public System.Diagnostics.Stopwatch sw = new System.Diagnostics.Stopwatch();
         
         public MainWindow()
@@ -90,38 +90,6 @@ namespace EnsembleSlave
         private void BluetoothButton_Click(object sender, RoutedEventArgs e)
         {
             OpenBluetoothWindow();
-        }
-        
-        private void PlayTimer_Tick(object sender, EventArgs e)
-        {
-            DateTime now = dt.Add(sw.Elapsed);
-            if (now > Target)
-            {
-                StartEnsemble();
-                playTimer.Stop();
-                Console.WriteLine("start ensemble : " + now.Second + ":" + now.Millisecond);
-            }
-        }
-
-        private void EnsembleTimer_Tick(object sender, EventArgs e)
-        {
-            if (listIndex >= timeList.Count)
-            {
-                StopEnsemble();
-                //listIndex = 0;
-                if (RepeatCheck.IsChecked == false)
-                {
-                    //ensembleTimer.Stop();
-                    //PlayButton.IsEnabled = true;
-                    return;
-                }
-            }
-            UpdateChord();
-            int sec = DateTime.Now.Second;
-            int mill = DateTime.Now.Millisecond;
-            DateTime now = dt.Add(sw.Elapsed);
-            Console.WriteLine("local update:" + sec + mill);
-            Console.WriteLine("ntp update:" + now.Second + ":" + now.Millisecond);
         }
 
         /// <summary> 終了処理 </summary>
@@ -188,10 +156,10 @@ namespace EnsembleSlave
             }
         }
         
-        public void SetTarget(string time)
+        public async void SetTarget(string getSignal)
         {
-            Console.WriteLine(time);
-            string[] tokens = time.Split(':');
+            Console.WriteLine("receive signal in SetTarget : " + getSignal);
+            string[] tokens = getSignal.Split(':');
             string targetStr = tokens[0] + ":" + tokens[1] + ":" + tokens[2] + ":" + tokens[3];
             string format = "";
             for (int i = 0; i < tokens[0].Length; i++) format += "H";
@@ -201,11 +169,22 @@ namespace EnsembleSlave
             for (int i = 0; i < tokens[2].Length; i++) format += "s";
             format += ":";
             for (int i = 0; i < tokens[3].Length; i++) format += "f";
-            format += ":";
-            Console.WriteLine(format);
             Target = DateTime.ParseExact(targetStr, format, null);
-            InitPlayTimer();
+            await Task.Run(() => WaitForStart());
+            
+            //InitPlayTimer();
             //Console.WriteLine(Target.ToLongDateString());
+        }
+
+        private void WaitForStart()
+        {
+            int waitTime = (int)(Target - ntpBasicTime.Add(sw.Elapsed)).TotalMilliseconds;
+            if (waitTime > 0)
+            {
+                System.Threading.Thread.Sleep(waitTime);
+            }
+            StartEnsemble();
+            Console.WriteLine("waitTime"+waitTime);
         }
 
         private void InitPlayTimer()
@@ -219,6 +198,18 @@ namespace EnsembleSlave
             playTimer.Start();
         }
 
+        private void PlayTimer_Tick(object sender, EventArgs e)
+        {
+            DateTime now = ntpBasicTime.Add(sw.Elapsed);
+            if (now > Target)
+            {
+                StartEnsemble();
+                playTimer.Stop();
+                Console.WriteLine("target in Playtimer_tick : " + Target.Hour + ":" + Target.Minute + ":" + Target.Second + ":" + Target.Millisecond);
+                Console.WriteLine("now in Playtimer_tick : " + now.Hour + ":" + now.Minute + ":" + now.Second + ":" + now.Millisecond);
+            }
+        }
+
         private void InitEnsembleTimer()
         {
             //初期化、普通にする際はプロパティはNormalでよいかと
@@ -226,21 +217,66 @@ namespace EnsembleSlave
             //左から　日数、時間、分、秒、ミリ秒で設定　今回は10ミリ秒ごとつまり1秒あたり100回処理します
             ensembleTimer.Interval = new TimeSpan(0, 0, 0, 2, 0);
             //dispatcherTimer.Tick += new EventHandler(DispatcherTimer_Tick);
-            ensembleTimer.Tick += new EventHandler(EnsembleTimer_Tick);
+            //ensembleTimer.Tick += new EventHandler(EnsembleTimer_Tick);
         }
 
-        public void StartEnsemble()
+        private void EnsembleTimer_Tick(object sender, EventArgs e)
         {
+            if (listIndex >= timeList.Count)
+            {
+                ensembleTime.Stop();
+                StopEnsemble();
+                //Console.WriteLine("ensembleTime");
+                //Console.WriteLine(ensembleTime.Elapsed);
+                //Console.WriteLine(ensembleTime.ElapsedMilliseconds);
+                //listIndex = 0;
+                if (RepeatCheck.IsChecked == false)
+                {
+                    //ensembleTimer.Stop();
+                    //PlayButton.IsEnabled = true;
+                    return;
+                }
+            }
             UpdateChord();
+            //int sec = DateTime.Now.Second;
+            //int mill = DateTime.Now.Millisecond;
+            //DateTime now = ntpStartTime.Add(sw.Elapsed);
+            //Console.WriteLine("local update:" + sec + mill);
+            //Console.WriteLine("ntp update:" + now.Second + ":" + now.Millisecond);
+        }
 
+        public System.Diagnostics.Stopwatch ensembleTime = new System.Diagnostics.Stopwatch();
+
+        public async void StartEnsemble()
+        {
+            //UpdateChord();
+            ensembleTime.Start();
             ensembleTimer.Start();
+            await Task.Run(() => UpdateEnsemble());
+            
 
+            int min = DateTime.Now.Minute;
             int sec = DateTime.Now.Second;
             int mill = DateTime.Now.Millisecond;
-            DateTime now = dt.Add(sw.Elapsed);
-            Console.WriteLine("local start2 :" + sec + ":" + mill);
-            Console.WriteLine("ntp start2 :" + now.Second + ":" + now.Millisecond);
-            PlayButton.IsEnabled = false;
+
+            DateTime now = ntpBasicTime.Add(sw.Elapsed);
+            Console.WriteLine("target : " + Target.Minute + ":" + Target.Second + ":" + Target.Millisecond);
+            Console.WriteLine("pc start time in StartEnsemble : " + min + ":" + sec + ":" + mill);
+            Console.WriteLine("ntp start time in StartEnsemble : " + now.Minute + ":" + now.Second + ":" + now.Millisecond);
+
+            //PlayButton.IsEnabled = false;
+        }
+
+        private void UpdateEnsemble()
+        {
+            for(int i = 1; i < freqsList.Count+1; i++)
+            {
+                UpdateChord();
+                int waitTime = (int)(Target.AddMilliseconds(2000 * i) - ntpBasicTime.Add(sw.Elapsed)).TotalMilliseconds;
+                System.Threading.Thread.Sleep(waitTime);
+            }
+            ensembleTime.Stop();
+            ensembleTimer.Stop();
         }
 
         public void StopEnsemble()
@@ -248,9 +284,9 @@ namespace EnsembleSlave
             ensembleTimer.Stop();
             int sec = DateTime.Now.Second;
             int mill = DateTime.Now.Millisecond;
-            DateTime now = dt.Add(sw.Elapsed);
-            Console.WriteLine("local stop:"+sec+mill);
-            Console.WriteLine("ntp stop:" + now.Second + ":" + now.Millisecond);
+            DateTime now = ntpBasicTime.Add(sw.Elapsed);
+            //Console.WriteLine("local stop:"+sec+mill);
+            //Console.WriteLine("ntp stop:" + now.Second + ":" + now.Millisecond);
             listIndex = 0;
             PlayButton.IsEnabled = true;
         }
@@ -265,6 +301,8 @@ namespace EnsembleSlave
             }
             //Chord.Text = freqs;
             */
+            //Console.WriteLine("list index in UpdateChord :" + listIndex);
+            Console.WriteLine("ensembletime in UpdateChord :" + ensembleTime.ElapsedMilliseconds);
             currentFreqs = freqsList[listIndex];
             listIndex++;
         }
@@ -361,9 +399,9 @@ namespace EnsembleSlave
             config = handAnalyzer.CreateActiveConfiguration();
             //config.EnableSegmentationImage(true);
             config.EnableJointSpeed(PXCMHandData.JointType.JOINT_MIDDLE_TIP,PXCMHandData.JointSpeedType.JOINT_SPEED_AVERAGE, 100);
-            config.EnableGesture("v_sign");
+            //config.EnableGesture("v_sign");
             config.EnableGesture("thumb_up");
-            //config.EnableGesture("thumb_down");
+            config.EnableGesture("thumb_down");
             //config.EnableGesture("tap");
             //config.EnableGesture("fist");
             config.SubscribeGesture(OnFiredGesture);
@@ -377,7 +415,6 @@ namespace EnsembleSlave
         bool playEnsemble = false;
         private void OnFiredGesture(PXCMHandData.GestureData gestureData)
         {
-            //preOccuredGesture = sw.ElapsedMilliseconds;
             int side = Array.IndexOf(side2id, gestureData.handId);
             if (gestureData.name == "v_sign" && !playEnsemble)
             {
@@ -394,18 +431,11 @@ namespace EnsembleSlave
                     InstrumentsList.SelectedIndex = (InstrumentsList.SelectedIndex + 1) % InstrumentsList.Items.Count;
                 }));
             }
-            if (gestureData.name == "thumb_down")
+            if (gestureData.name == "thumb_down" && gestureTimer.ElapsedMilliseconds > 1000)
             {
                 Dispatcher.BeginInvoke(new Action(() =>
                 {
-                    if (side == 0)
-                    {
-                        //RightList.SelectedIndex = (RightList.SelectedIndex - 1) % RightList.Items.Count;
-                    }
-                    if (side == 1)
-                    {
-                        //LeftList.SelectedIndex = (LeftList.SelectedIndex - 1) % LeftList.Items.Count;
-                    }
+                    InstrumentsList.SelectedIndex--;
                 }));
             }
             gestureTimer.Restart();
@@ -431,6 +461,7 @@ namespace EnsembleSlave
             UpdateHandFrame();
 
             //演奏領域の表示
+            //if (ensembleTimer.IsEnabled)
             if (ensembleTimer.IsEnabled)
                 for (int k = 0; k < currentFreqs.Length; k++)
                 {
@@ -619,7 +650,7 @@ namespace EnsembleSlave
                )
             {
                 //tap音を出力
-                midi.OnNote(currentFreqs[(int)(((ColorImage.Height - mcp.y) / (ColorImage.Height + 0.01)) * currentFreqs.Length)]);
+                //midi.OnNote(currentFreqs[(int)(((ColorImage.Height - mcp.y) / (ColorImage.Height + 0.01)) * currentFreqs.Length)]);
                 lsw.Restart();
             }
 
@@ -775,13 +806,17 @@ namespace EnsembleSlave
             long mill = (long)((pico * 1000) / (double)4294967296); //2~32
 
             // DateTime型への変換
-            dt = dt.AddDays(lngD);
-            dt = dt.AddHours(lngH);
-            dt = dt.AddMinutes(lngM);
-            dt = dt.AddSeconds(lngS);
-            dt = dt.AddMilliseconds(mill);
+            ntpBasicTime = ntpBasicTime.AddDays(lngD);
+            ntpBasicTime = ntpBasicTime.AddHours(lngH);
+            ntpBasicTime = ntpBasicTime.AddMinutes(lngM);
+            ntpBasicTime = ntpBasicTime.AddSeconds(lngS);
+            ntpBasicTime = ntpBasicTime.AddMilliseconds(mill);
             //グリニッジ標準時から日本時間への変更
-            dt = dt.AddHours(9);
+            ntpBasicTime = ntpBasicTime.AddHours(9);
+
+            Console.WriteLine("ntp time in UpdateNTPTime :" + ntpBasicTime.ToString());
+            Console.WriteLine("local time in UpdateNTPTime :" + DateTime.Now.ToString());
+
             sw.Start();
         }
         #endregion
@@ -790,5 +825,6 @@ namespace EnsembleSlave
         {
             if (InstrumentsList.SelectedIndex > 0) midi.ProgramChange(Instruments.Numbers[InstrumentsList.SelectedIndex]);
         }
+
     }
 }

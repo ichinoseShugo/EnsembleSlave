@@ -81,7 +81,7 @@ namespace EnsembleSlave.Bluetooth
 
         private void WaitButton_Click(object sender, RoutedEventArgs e)
         {
-            bluetoothManager.Start(mainWindow);
+            //bluetoothManager.Start(mainWindow);
         }
 
         private void DisconnectButton_Click(object sender, RoutedEventArgs e)
